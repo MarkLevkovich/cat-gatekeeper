@@ -57,7 +57,7 @@ let trackerRunning = false;
 // Handle messages from the popup
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message.type === 'GET_CAT_STATUS') {
-    sendResponse({
+    const baseResponse = {
       catIsActive,
       hostname,
       trackerRunning,
@@ -66,8 +66,48 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       trackedDomain: currentUsageKey,
       hasFocus: document.hasFocus(),
       isHidden: document.hidden,
+    };
+
+    const usageKey = currentUsageKey;
+    if (!usageKey || !currentSnsEnabled) {
+      sendResponse({
+        ...baseResponse,
+        usageSeconds: 0,
+        breakRemainingSeconds: 0,
+      });
+      return;
+    }
+
+    let usageSeconds = 0;
+    let breakRemainingSeconds = 0;
+    let pending = 2;
+
+    function finish() {
+      pending--;
+      if (pending > 0) return;
+      sendResponse({
+        ...baseResponse,
+        usageSeconds,
+        breakRemainingSeconds,
+      });
+    }
+
+    loadUsageSeconds(usageKey, (seconds) => {
+      usageSeconds = Math.max(0, Number(seconds) || 0);
+      finish();
     });
-    return;
+
+    loadBreakEndAtMs(usageKey, (endAtMs) => {
+      if (!endAtMs) {
+        breakRemainingSeconds = 0;
+        finish();
+        return;
+      }
+      breakRemainingSeconds = Math.max(0, Math.ceil((endAtMs - Date.now()) / 1000));
+      finish();
+    });
+
+    return true;
   }
 
   if (message.type === 'UPDATE_SETTINGS') {
@@ -94,6 +134,12 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         startTracking(currentUsageLimit, currentBreakTime);
       }
     }, 500);
+  }
+
+  if (message.type === 'RESET_USAGE') {
+    resetUsageSeconds(currentUsageKey);
+    sendResponse({ ok: true });
+    return;
   }
 });
 

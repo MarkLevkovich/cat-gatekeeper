@@ -34,5 +34,32 @@
   },
   "targetSitesHelpTitle": {
     "message": "サイト計測について"
+  },
+  "siteStatusLabel": {
+    "message": "このサイトの状態"
+  },
+  "siteStatusTrackedLabel": {
+    "message": "計測対象"
+  },
+  "siteStatusTrackedYes": {
+    "message": "はい"
+  },
+  "siteStatusTrackedNo": {
+    "message": "いいえ"
+  },
+  "siteStatusDomainLabel": {
+    "message": "一致したドメイン"
+  },
+  "siteStatusUsageLabel": {
+    "message": "使用時間"
+  },
+  "siteStatusBreakRemainingLabel": {
+    "message": "残り時間"
+  },
+  "resetUsageButton": {
+    "message": "このサイトの時間をリセット"
+  },
+  "resetUsageDoneMessage": {
+    "message": "リセットしました！"
   }
 }

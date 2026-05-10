@@ -163,6 +163,43 @@
       accent-color: #ff6b35;
     }
 
+    .status-box {
+      background: #242424;
+      border: 1px solid #2e2e2e;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      color: #ddd;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 4px 0;
+    }
+
+    .status-key {
+      color: #aaa;
+      white-space: nowrap;
+    }
+
+    .status-value {
+      color: #fff;
+      text-align: right;
+      word-break: break-word;
+    }
+
+    #resetUsageBtn {
+      background: #444;
+      margin-top: 10px;
+      display: none;
+    }
+
+    #resetUsageBtn:hover {
+      background: #555;
+    }
+
     .footer-link {
       display: block;
       margin-top: 12px;
@@ -218,9 +255,33 @@
     <p class="hint" data-i18n="customDomainsHint"></p>
   </div>
 
+  <div class="section" id="statusSection" style="display:none;">
+    <label data-i18n="siteStatusLabel"></label>
+    <div class="status-box" role="status" aria-live="polite">
+      <div class="status-row">
+        <div class="status-key" data-i18n="siteStatusTrackedLabel"></div>
+        <div class="status-value" id="statusTrackedValue"></div>
+      </div>
+      <div class="status-row">
+        <div class="status-key" data-i18n="siteStatusDomainLabel"></div>
+        <div class="status-value" id="statusDomainValue"></div>
+      </div>
+      <div class="status-row">
+        <div class="status-key" data-i18n="siteStatusUsageLabel"></div>
+        <div class="status-value" id="statusUsageValue"></div>
+      </div>
+      <div class="status-row" id="statusBreakRow" style="display:none;">
+        <div class="status-key" data-i18n="siteStatusBreakRemainingLabel"></div>
+        <div class="status-value" id="statusBreakValue"></div>
+      </div>
+    </div>
+    <button id="resetUsageBtn" data-i18n="resetUsageButton"></button>
+  </div>
+
   <button id="dismissBtn" data-i18n="dismissButton"></button>
   <button id="saveBtn" data-i18n="saveButton"></button>
   <div class="saved" id="savedMsg" data-i18n="savedMessage"></div>
+  <div class="saved" id="actionMsg" style="display:none;"></div>
   <a class="footer-link" href="https://zokuzoku.github.io/cat-gatekeeper/" target="_blank" rel="noopener" data-i18n="officialSiteLink"></a>
 
   <script src="shared.js"></script>

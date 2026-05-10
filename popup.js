@@ -22,6 +22,20 @@ function mergeSettingsWithDefaults(settings) {
   return shared.normalizeSettings(settings);
 }
 
+function formatDuration(seconds) {
+  const total = Math.max(0, Number(seconds) || 0);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function formatUsage(seconds) {
+  const total = Math.max(0, Number(seconds) || 0);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return s ? `${m}m ${s}s` : `${m}m`;
+}
+
 function getClampedNumberValue(inputId, fallbackValue) {
   const input = document.getElementById(inputId);
   const parsedValue = Number.parseInt(input.value, 10);
@@ -35,14 +49,54 @@ function getClampedNumberValue(inputId, fallbackValue) {
   return Math.min(Math.max(parsedValue, minValue), maxValue);
 }
 
-// Show dismiss button only when the cat is active
 const dismissBtn = document.getElementById('dismissBtn');
-chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-  chrome.tabs.sendMessage(tabs[0].id, { type: 'GET_CAT_STATUS' }, (res) => {
-    void chrome.runtime.lastError;
-    if (res?.catIsActive) dismissBtn.style.display = 'block';
+const resetUsageBtn = document.getElementById('resetUsageBtn');
+const statusSection = document.getElementById('statusSection');
+const statusTrackedValue = document.getElementById('statusTrackedValue');
+const statusDomainValue = document.getElementById('statusDomainValue');
+const statusUsageValue = document.getElementById('statusUsageValue');
+const statusBreakRow = document.getElementById('statusBreakRow');
+const statusBreakValue = document.getElementById('statusBreakValue');
+
+function showActionMessage(messageKey) {
+  const el = document.getElementById('actionMsg');
+  el.textContent = chrome.i18n.getMessage(messageKey);
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 2000);
+}
+
+function refreshStatus() {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tabId = tabs?.[0]?.id;
+    if (!tabId) return;
+
+    chrome.tabs.sendMessage(tabId, { type: 'GET_CAT_STATUS' }, (res) => {
+      void chrome.runtime.lastError;
+      if (!res) return;
+
+      dismissBtn.style.display = res.catIsActive ? 'block' : 'none';
+
+      statusSection.style.display = 'block';
+      statusTrackedValue.textContent = res.isTracked
+        ? chrome.i18n.getMessage('siteStatusTrackedYes')
+        : chrome.i18n.getMessage('siteStatusTrackedNo');
+      statusDomainValue.textContent = res.isTracked ? (res.trackedDomain || '-') : '-';
+      statusUsageValue.textContent = res.isTracked ? formatUsage(res.usageSeconds) : '-';
+
+      if (res.catIsActive && res.breakRemainingSeconds > 0) {
+        statusBreakRow.style.display = 'flex';
+        statusBreakValue.textContent = formatDuration(res.breakRemainingSeconds);
+      } else {
+        statusBreakRow.style.display = 'none';
+      }
+
+      resetUsageBtn.style.display = res.isTracked ? 'block' : 'none';
+      resetUsageBtn.disabled = !res.isTracked;
+    });
   });
-});
+}
+
+refreshStatus();
 
 dismissBtn.addEventListener('click', () => {
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -50,6 +104,18 @@ dismissBtn.addEventListener('click', () => {
       void chrome.runtime.lastError;
     });
     dismissBtn.style.display = 'none';
+  });
+});
+
+resetUsageBtn.addEventListener('click', () => {
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    const tabId = tabs?.[0]?.id;
+    if (!tabId) return;
+    chrome.tabs.sendMessage(tabId, { type: 'RESET_USAGE' }, (res) => {
+      void chrome.runtime.lastError;
+      if (res?.ok) showActionMessage('resetUsageDoneMessage');
+      refreshStatus();
+    });
   });
 });
 
@@ -90,6 +156,8 @@ document.getElementById('saveBtn').addEventListener('click', () => {
         void chrome.runtime.lastError;
       });
     });
+
+    refreshStatus();
   });
 });
 
